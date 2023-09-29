@@ -71,6 +71,8 @@ key = Fernet(st.secrets['fernet_key'])
 config_drive = deta.Drive("passwords")
 config = config_drive.get("config.yaml").read()
 config = yaml.load(config, Loader=SafeLoader)
+if 'name' not in st.session_state:
+    st.session_state.name = None
 
 # Create an authenticator
 authenticator = stauth.Authenticate(
