@@ -61,8 +61,14 @@ def survey(user_name):
     title = user_name + '_survey'
     return ss.StreamlitSurvey(title)
 
+@st.cache_resource
+def access_db(db_key):
+    deta = Deta(db_key)
+    return deta
+
 # connect to/create Deta user database
-deta = Deta(st.secrets["deta_key"])
+db_key = st.secrets["deta_key"]
+deta = access_db(db_key)
 db = deta.Base("user_data")
 key = Fernet(st.secrets['fernet_key'])
 config_drive = deta.Drive("passwords")

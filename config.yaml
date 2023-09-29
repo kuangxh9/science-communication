@@ -1,0 +1,29 @@
+cookie:
+  expiry_days: 1
+  key: random_signature_key
+  name: random_cookie_name
+credentials:
+  usernames:
+    kuangxh9:
+      email: kuangxh9@test.com
+      name: kuangxh9
+      password: $2b$12$Czu15fuYb3/5PQwxRxiNA.soSXpPDSIpfdR4aELllK.dhNIvd9ejG
+    margo:
+      email: margo.minj.kim@gmail.com
+      name: 'Margo '
+      password: $2b$12$hadbkyCIXbRqSBYq//AnReeZ9OuppLDSXBlJpzeyGK19pn8c6bFNq
+    nealbagai26:
+      email: nealbagaicollege@gmail.com
+      name: Neal Bagai
+      password: $2b$12$S1SL.gaOrUu8Igb8xadWM.OyF/THXqVoAs9Lj.g0kmhza6IuxTWXq
+    test:
+      email: test@test.com
+      name: test_user
+      password: $2b$12$poJyKZ.WQKCBN1o1i8bHG.tZb6mdDLj4Jgr.zjW2Wl4jdbdYsaZHu
+    test_02:
+      email: t@t.c
+      name: user
+      password: $2b$12$.onRBKKcwGSuOpWkGokR/uqIrFr9Tyv9s6f1TwqpiejnqeGlih1Ra
+preauthorized:
+  emails:
+  - test@test.com
