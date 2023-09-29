@@ -6,6 +6,8 @@ To run `streamlit_app.py` locally, please make sure that:
 
 Then `streamlit run streamlit_app.py` to test it locally.
 
+This app is hosted on Streamlit Cloud: https://science-communication.streamlit.app/
+
 ### Update 09/28
 * Fixed KeyError issue
     - This problem might be caused by Streamlit auto-rerun mechanism. Some instances / variables initialized (`None`) outside of functions will execute even they are assigned with other values in certain pages. 
