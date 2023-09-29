@@ -76,14 +76,14 @@ config = config_drive.get("config.yaml").read()
 config = yaml.load(config, Loader=SafeLoader)
 
 # Create an authenticator
-authenticator = stauth.Authenticate(
-    config['credentials'],
-    config['cookie']['name'],
-    config['cookie']['key'],
-    config['cookie']['expiry_days'],
-    config['preauthorized']
-)
-authenticator.validator = Validator()
+# authenticator = stauth.Authenticate(
+#     config['credentials'],
+#     config['cookie']['name'],
+#     config['cookie']['key'],
+#     config['cookie']['expiry_days'],
+#     config['preauthorized']
+# )
+# authenticator.validator = Validator()
 init_sidebar = st.sidebar.empty()
 
 with init_sidebar:
@@ -95,11 +95,15 @@ with init_sidebar:
                        styles={})
 
 if page == 'Login':
+    authenticator = stauth.Authenticate(
+        config['credentials'],
+        config['cookie']['name'],
+        config['cookie']['key'],
+        config['cookie']['expiry_days'],
+        config['preauthorized']
+    )
+    authenticator.validator = Validator()
     name, authentication_status, username = authenticator.login('Login', 'main')
-
-    # print('-------', st.session_state.name,'--------')
-    # print('-------',st.session_state.authentication_status, '--------')
-    # print('-------',st.session_state.username, '--------')
 
     if authentication_status:
         init_sidebar.empty()
