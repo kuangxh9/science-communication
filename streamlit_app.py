@@ -29,8 +29,6 @@ class Validator:
             return True
         return False
 
-
-@st.cache_data
 def get_user_data(user):
     data = db.fetch().items
     for person in data:
