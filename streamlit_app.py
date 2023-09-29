@@ -216,8 +216,6 @@ if page == 'Login':
                 st.success('Updating successfully!')
         elif page == "Questionnaire":
             survey = survey(st.session_state.username)
-            print('----------')
-            print(survey.data)
             page_number = 6
             survey_pages = survey.pages(page_number,
                                         on_submit=lambda: st.success("Your responses have been recorded. Thank you!"))
