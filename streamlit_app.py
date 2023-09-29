@@ -55,11 +55,10 @@ def generate_responses(prompt, text):
         return response['choices'][0]['message']['content']
     except:
         st.error('Invalid api key.', icon="⚠️")
+
 @st.cache_resource
 def survey(user_name):
-    print('---- enter survey function ----')
     title = user_name + '_survey'
-    print('---- title ---- ', title)
     return ss.StreamlitSurvey(title)
 
 # connect to/create Deta user database
@@ -90,10 +89,12 @@ with init_sidebar:
                        styles={})
 
 if page == 'Login':
-    if 'name' not in st.session_state:
-        st.session_state.name = None
     name, authentication_status, username = authenticator.login('Login', 'main')
-    st.session_state.authentication_status = authentication_status
+
+    # print('-------', st.session_state.name,'--------')
+    # print('-------',st.session_state.authentication_status, '--------')
+    # print('-------',st.session_state.username, '--------')
+
     if authentication_status:
         init_sidebar.empty()
         app_sidebar = st.sidebar.empty()
@@ -213,7 +214,7 @@ if page == 'Login':
                      "writing_style": writing_style, "domain": domain})
                 st.success('Updating successfully!')
         elif page == "Questionnaire":
-            survey = survey(st.session_state.username)
+            survey = survey(username)
             page_number = 6
             survey_pages = survey.pages(page_number,
                                         on_submit=lambda: st.success("Your responses have been recorded. Thank you!"))
