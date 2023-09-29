@@ -95,18 +95,7 @@ with init_sidebar:
                        styles={})
 
 if page == 'Login':
-    try:
-        name, authentication_status, username = authenticator.login('Login', 'main')
-    except:
-        authenticator = stauth.Authenticate(
-            config['credentials'],
-            config['cookie']['name'],
-            config['cookie']['key'],
-            config['cookie']['expiry_days'],
-            config['preauthorized']
-        )
-        authenticator.validator = Validator()
-        name, authentication_status, username = authenticator.login('Login', 'main')
+    name, authentication_status, username = authenticator.login('Login', 'main')
     if authentication_status:
         init_sidebar.empty()
         app_sidebar = st.sidebar.empty()
