@@ -4,7 +4,16 @@ To run `streamlit_app.py` locally, please make sure that:
 * `secrets.toml` and `credentials.toml` are under directory `C:\Users\<username>\.streamlit\`. 
 * `pip install -r requirements.txt`
 
-Then `streamlit run streamlit_app.py` to test it locally.
+Then `streamlit run streamlit_app.py` to test it locally.<br>
+Online web link: https://huggingface.co/spaces/yuki-816/science-communication
+
+### Update 10/06
+* Updated `user_context` template in `generate_response` function.
+* Properly stored user response in questionnaire to Deta database
+* Restructured `Questionnaire` page
+* Other Issue:
+    - For running speed, `generate_response` function only takes first `2048` characters of abstract or uploaded file content
+    - Running speed is somehow slower while regenerating response with additional prompts.
 
 ### Update 10/04
 * `KeyError` for `name` of `streamlit-authen` only exists when hosting on Streamlit Cloud

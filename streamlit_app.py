@@ -32,6 +32,7 @@ class Validator:
             return True
         return False
 
+
 def get_user_data(user):
     data = db.fetch().items
     for person in data:
@@ -39,29 +40,32 @@ def get_user_data(user):
             return person
     return None
 
+
 def user_history(time, text, ):
     pass
+
 
 def update_questionnaire_response(user_response, username):
     db.update({"questionnaire_response": user_response}, key=username)
     st.success("Your responses have been recorded. Thank you!")
 
+
 def generate_responses(text, chat_model="gpt-3.5-turbo", paper_title="", sci_familiarity="", tech_usage="",
-                       social_media_usage="", read_news="", primary_language="", other_languages=""):
+                       read_news="", language_spoken="", additional_requirements="None"):
     # Incorporating the parameters into the context
     text = text[:2048]
     user_context = f"""
-    The user has a familiarity level of {sci_familiarity} with scientific concepts. They often use {tech_usage} and 
-    their social media usage is {social_media_usage}. They {read_news} read or watch the news. The primary language 
-    spoken at their home is {primary_language} and they also speak {other_languages}.
+    The user has {sci_familiarity} with scientific concepts. He/She {tech_usage} uses technology products. 
+    He/She {read_news} read or watch the news. The primary language spoken at his/her home is(are) {language_spoken}.
     """
 
-    print(user_context)
+    # print(user_context)
 
     # Prompt template
     prompt_template = f"""
-    Here's the abstract of a paper titled {paper_title}. {text}
-    {user_context}
+    Here's the abstract of a paper (titled) {paper_title}: {text}.
+    Considering the user's information: {user_context}.
+    And user's additional requirements: {additional_requirements}.
     Generate a plain language summary that summarizes the abstract. While creating this Plain Language Summary, please keep the following must-have elements in mind:
     - Ensure fidelity to the original source.
     - Use clear and simple language, avoiding jargon.
@@ -139,7 +143,6 @@ if page == 'Login':
             authenticator.logout('Logout', 'sidebar', key='unique_key')
         # Fetch user data from the database
         user_data = get_user_data(username)
-
         if page == "Generate Plain Language Summary":
 
             st.title("Generate Plain Language Summary")
@@ -191,12 +194,15 @@ if page == 'Login':
                 st.session_state.draft_response_content = ""
 
             draft_response = ''
-            user_response = user_data['questionnaire_response'] if user_data else defaultdict(lambda : '')
+            user_response = user_data['questionnaire_response'] if user_data else defaultdict(lambda: '')
 
+            submit_text = ''
+            if entire_text:
+                submit_text = entire_text
+            else:
+                submit_text = abstract_text
             # Check if the "Submit" button is clicked
             if st.button("Submit"):
-                submit_text = ''
-
                 if abstract_text == '' and uploaded_file == None:
                     st.warning('Please paste Abstract or upload a file.', icon="⚠️")
 
@@ -206,10 +212,6 @@ if page == 'Login':
                 else:
                     st.warning('Please fill in api-key in Setup.', icon="⚠️")
 
-                if entire_text:
-                    submit_text = entire_text
-                else:
-                    submit_text = abstract_text
                 if chat_mdl is not None and submit_text:
                     st.session_state.draft_response_content = generate_responses(
                         text=submit_text,
@@ -218,13 +220,10 @@ if page == 'Login':
                             'paper_familiarity'],
                         tech_usage=user_response[
                             'tech_usage'],
-                        social_media_usage='Unknown',
                         read_news=user_response[
                             'news_read'],
-                        primary_language=user_response[
-                            'primary_language'],
-                        other_languages=user_response[
-                            'other_languages'], )
+                        language_spoken=user_response[
+                            'language_spoken'],)
 
             container = st.empty()
             # Output from function
@@ -246,13 +245,11 @@ if page == 'Login':
                             'paper_familiarity'],
                         tech_usage=user_response[
                             'tech_usage'],
-                        social_media_usage='Unknown',
                         read_news=user_response[
                             'news_read'],
-                        primary_language=user_response[
-                            'primary_language'],
-                        other_languages=user_response[
-                            'other_languages'], )
+                        language_spoken=user_response[
+                            'language_spoken'],
+                        additional_requirements=additional_prompt)
                     container.empty()
                     container.text_area(label="Plain Language Summary", value=st.session_state.draft_response_content,
                                         height=350)
@@ -274,7 +271,8 @@ if page == 'Login':
             # Update button
             if st.button("Update"):
                 db.put(
-                    {"key": username, "api": key.encrypt(bytes(api_input, 'utf-8')).decode(), "questionnaire_response": questionnaire_response})
+                    {"key": username, "api": key.encrypt(bytes(api_input, 'utf-8')).decode(),
+                     "questionnaire_response": questionnaire_response})
                 st.success('Updating successfully!')
         elif page == "Questionnaire":
             survey = survey(username)
@@ -283,7 +281,8 @@ if page == 'Login':
             # print(st.session_state['questionnaire_response'])
             page_number = 10
             survey_pages = survey.pages(page_number,
-                                        on_submit=lambda: update_questionnaire_response(st.session_state['questionnaire_response'], username))
+                                        on_submit=lambda: update_questionnaire_response(
+                                            st.session_state['questionnaire_response'], username))
             # st.session_state["__streamlit-survey-data__Pages_"] = survey_pages.current
             st.progress((survey_pages.current + 1) / page_number)
             with survey_pages:
@@ -300,31 +299,41 @@ if page == 'Login':
                     st.session_state['questionnaire_response']['level_education'] = level_education
                 elif survey_pages.current == 1:
                     st.write("#### What domains are you most interested in?")
-                    survey.checkbox('Global Studies')
-                    survey.checkbox('Arts')
-                    survey.checkbox('Business & Economics')
-                    survey.checkbox('History')
-                    survey.checkbox('Humanities')
-                    survey.checkbox('Law')
-                    survey.checkbox('Medicine and Health')
-                    survey.checkbox('Science - Biology')
-                    survey.checkbox('Science - Chemistry')
-                    survey.checkbox('Science - Environmental Science')
-                    survey.checkbox('Science - Physics')
-                    survey.checkbox('Mathematics')
-                    survey.checkbox('Engineering')
-                    survey.checkbox('Social Sciences')
+                    domains = ['Global Studies', 'Arts', 'Business & Economics', 'History', 'Humanities',
+                               'Law', 'Medicine and Health', 'Science - Biology', 'Science - Chemistry',
+                               'Science - Environmental Science', 'Science - Physics', 'Mathematics',
+                               'Engineering', 'Social Sciences']
+                    domains_interested = {}
+                    for i in range(len(domains)):
+                        domains_interested[domains[i]] = survey.checkbox(domains[i])
+                    interested_domain = []
+                    for domain in domains_interested:
+                        if domains_interested[domain]:
+                            interested_domain.append(domain)
+                    st.session_state['questionnaire_response']['interested_domain'] = interested_domain
                 elif survey_pages.current == 2:
-                    survey.text_area("#### How did you come across this paper?")
+                    paper_discovery_method = survey.text_area("#### How did you come across this paper?")
+                    st.session_state['questionnaire_response']['paper_discovery_method'] = paper_discovery_method
                 elif survey_pages.current == 3:
-                    survey.text_area("#### For what purpose are you reading this paper?")
+                    reading_purpose = survey.text_area("#### For what purpose are you reading this paper?")
+                    st.session_state['questionnaire_response']['reading_purpose'] = reading_purpose
                 elif survey_pages.current == 4:
                     st.write("#### What information do you want to get out of this paper?")
-                    survey.checkbox("Main findings and conclusions")
-                    survey.checkbox('Methodology and experimental design')
-                    survey.checkbox('Data and statistical analysis')
-                    survey.checkbox('Limitations or gaps in the research')
-                    survey.text_input('Other aspects:')
+                    information_options = ["Main findings and conclusions",
+                                           'Methodology and experimental design',
+                                           'Data and statistical analysis',
+                                           'Limitations or gaps in the research']
+                    info_interested = {}
+                    for i in range(len(information_options)):
+                        info_interested[information_options[i]] = survey.checkbox(information_options[i])
+                    desired_information = []
+                    for info in info_interested:
+                        if info_interested[info]:
+                            desired_information.append(info)
+                    other_info = survey.text_input('Other aspects:')
+                    if other_info:
+                        desired_information.append(other_info)
+                    st.session_state['questionnaire_response']['desired_information'] = desired_information
                 elif survey_pages.current == 5:
                     st.write("#### What is your familiarity with the concepts of the paper?")
                     st.markdown('''
@@ -337,7 +346,7 @@ if page == 'Login':
                     paper_familiarity = survey.select_slider(
                         label="paper_familiarity",
                         options=['No Familiarity', 'Limited Familiarity', 'Moderate Familiarity',
-                                 'Good Familiarity', 'Expert'],
+                                 'Good Familiarity', 'Expert Familiarity'],
                         # min_value=1,
                         # max_value=5,
                         label_visibility="collapsed",
@@ -382,25 +391,22 @@ if page == 'Login':
                         label_visibility="collapsed",
                         horizontal=True,
                     )
+                    st.session_state['questionnaire_response']['books_read'] = books_read
                 elif survey_pages.current == 9:
                     st.write("#### What is the primary language spoken in your home? (click from the list and others)")
-                    english = survey.checkbox("English")
-                    spanish = survey.checkbox('Spanish')
-                    primary_language = []
+                    languages = ['English', 'Spanish', ]
+                    language_options = {}
+                    for i in range(len(languages)):
+                        language_options[languages[i]] = survey.checkbox(languages[i])
+                    language_spoken = []
+                    for language in language_options:
+                        if language_options[language]:
+                            language_spoken.append(language)
                     other_language = survey.text_input('Other')
 
-                    if english:
-                        primary_language.append('English')
-                    if spanish:
-                        primary_language.append('Spanish')
                     if other_language:
-                        st.session_state['other_languages'] = other_language
-
-                    st.session_state['questionnaire_response']['primary_language'] = primary_language
-                    st.session_state['questionnaire_response']['other_languages'] = other_language
-                # questionnaire_json = survey.to_json()
-                # # print(questionnaire_json)
-                # db.update({"questionnaire_response": questionnaire_json}, key=username)
+                        language_spoken.append(other_language)
+                    st.session_state['questionnaire_response']['language_spoken'] = language_spoken
 
     elif authentication_status is False:
         st.error('Username or Password is incorrect', icon="⚠️")
