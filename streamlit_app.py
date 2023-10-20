@@ -50,13 +50,17 @@ def update_questionnaire_response(user_response, username):
     st.success("Your responses have been recorded. Thank you!")
 
 
-def generate_responses(text, chat_model="gpt-3.5-turbo", paper_title="", sci_familiarity="", tech_usage="",
-                       read_news="", language_spoken="", additional_requirements="None"):
+def generate_responses(text, chat_model="gpt-3.5-turbo", paper_title="", level_education="",
+                       paper_familiarity="", english_proficiency="", language_spoken="", tech_usage="",
+                       news_read="", books_read="", additional_requirements="None"):
     # Incorporating the parameters into the context
     text = text[:2048]
     user_context = f"""
-    The user has {sci_familiarity} with scientific concepts. He/She {tech_usage} uses technology products. 
-    He/She {read_news} read or watch the news. The primary language spoken at his/her home is(are) {language_spoken}.
+    The user has achieved an education level up tp {level_education}. For the given paper content and concept, the user
+    describes his/her understanding as {paper_familiarity}. In daily routine, the user describes the frequency of using
+    technology such as computers, cell phones, and tablets as {tech_usage}. The user's primary language spoken at home is
+    {language_spoken}, and has {english_proficiency} level of English proficiency. The user {news_read} reads or watches
+    the news and reads approximately {books_read} books in a month.
     """
 
     # print(user_context)
@@ -118,23 +122,24 @@ authenticator.validator = Validator()
 init_sidebar = st.sidebar.empty()
 
 with init_sidebar:
-    page = option_menu(None,
-                       ["Login", 'Sign Up'],
-                       icons=['lightbulb-fill', 'lightbulb'],
-                       menu_icon="cast",
-                       default_index=0,
-                       styles={})
+    init_page = option_menu(None,
+                            ["Login", 'Sign Up'],
+                            icons=['lightbulb-fill', 'lightbulb'],
+                            menu_icon="cast",
+                            default_index=0,
+                            styles={})
 
-if page == 'Login':
-    st.cache_data.clear()
+if init_page == 'Login':
     name, authentication_status, username = authenticator.login('Login', 'main')
     if authentication_status:
         init_sidebar.empty()
+        st.sidebar.write(f'**Welcome** {name}')
         app_sidebar = st.sidebar.empty()
-        # st.sidebar.write(f'Welcome {name}')
+
+        if 'current_page_name' not in st.session_state:
+            st.session_state.current_page_name = "Generate Plain Language Summary"  # 设置默认页面
+
         with app_sidebar:
-            # 'History'
-            # 'folder2',
             page = option_menu(None, ["Generate Plain Language Summary", 'Questionnaire', 'Setup'],
                                icons=['house', 'question-circle', 'gear'],
                                menu_icon="None",
@@ -142,7 +147,10 @@ if page == 'Login':
                                styles={})
             authenticator.logout('Logout', 'sidebar', key='unique_key')
         # Fetch user data from the database
+
         user_data = get_user_data(username)
+        # print('current page: ', page)
+
         if page == "Generate Plain Language Summary":
 
             st.title("Generate Plain Language Summary")
@@ -202,6 +210,26 @@ if page == 'Login':
             else:
                 submit_text = abstract_text
             # Check if the "Submit" button is clicked
+
+            st.write("#### What is your familiarity with the concepts of the paper?")
+            st.markdown('''
+                    * No Familiarity: entirely unfamiliar, no prior knowledge
+                    * Limited Familiarity: basic awareness of the concepts in the paper, but not in-depth knowledge
+                    * Moderate Familiarity: reasonable understanding of the concepts in the paper, encountered before, or some background knowledge
+                    * Good Familiarity: a solid understanding due to prior exposure or study
+                    * Expert: highly knowledgeable and experienced in the field and has worked extensively with these concepts
+                ''')
+            paper_familiarity = st.select_slider(
+                label="paper_familiarity",
+                options=['No Familiarity', 'Limited Familiarity', 'Moderate Familiarity',
+                         'Good Familiarity', 'Expert Familiarity'],
+                label_visibility="collapsed",
+            )
+
+            if 'paper_familiarity' not in st.session_state:
+                st.session_state['paper_familiarity'] = ''
+            st.session_state['paper_familiarity'] = paper_familiarity
+
             if st.button("Submit"):
                 if abstract_text == '' and uploaded_file == None:
                     st.warning('Please paste Abstract or upload a file.', icon="⚠️")
@@ -216,14 +244,20 @@ if page == 'Login':
                     st.session_state.draft_response_content = generate_responses(
                         text=submit_text,
                         paper_title=title_text,
-                        sci_familiarity=user_response[
-                            'paper_familiarity'],
+                        level_education=user_response[
+                            'level_education'],
+                        paper_familiarity=st.session_state['paper_familiarity'],
+                        english_proficiency=user_response[
+                            'english_proficiency'],
+                        language_spoken=user_response[
+                            'language_spoken'],
                         tech_usage=user_response[
                             'tech_usage'],
-                        read_news=user_response[
+                        news_read=user_response[
                             'news_read'],
-                        language_spoken=user_response[
-                            'language_spoken'],)
+                        books_read=user_response[
+                            'books_read'],
+                    )
 
             container = st.empty()
             # Output from function
@@ -241,15 +275,21 @@ if page == 'Login':
                     st.session_state.draft_response_content = generate_responses(
                         text=submit_text,
                         paper_title=title_text,
-                        sci_familiarity=user_response[
-                            'paper_familiarity'],
-                        tech_usage=user_response[
-                            'tech_usage'],
-                        read_news=user_response[
-                            'news_read'],
+                        level_education=user_response[
+                            'level_education'],
+                        paper_familiarity=st.session_state['paper_familiarity'],
+                        english_proficiency=user_response[
+                            'english_proficiency'],
                         language_spoken=user_response[
                             'language_spoken'],
-                        additional_requirements=additional_prompt)
+                        tech_usage=user_response[
+                            'tech_usage'],
+                        news_read=user_response[
+                            'news_read'],
+                        books_read=user_response[
+                            'books_read'],
+                        additional_requirements=additional_prompt,
+                    )
                     container.empty()
                     container.text_area(label="Plain Language Summary", value=st.session_state.draft_response_content,
                                         height=350)
@@ -279,7 +319,7 @@ if page == 'Login':
             if 'questionnaire_response' not in st.session_state:
                 st.session_state['questionnaire_response'] = {}
             # print(st.session_state['questionnaire_response'])
-            page_number = 10
+            page_number = 11
             survey_pages = survey.pages(page_number,
                                         on_submit=lambda: update_questionnaire_response(
                                             st.session_state['questionnaire_response'], username))
@@ -335,24 +375,54 @@ if page == 'Login':
                         desired_information.append(other_info)
                     st.session_state['questionnaire_response']['desired_information'] = desired_information
                 elif survey_pages.current == 5:
-                    st.write("#### What is your familiarity with the concepts of the paper?")
-                    st.markdown('''
-                        * No Familiarity: entirely unfamiliar, no prior knowledge
-                        * Limited Familiarity: basic awareness of the concepts in the paper, but not in-depth knowledge
-                        * Moderate Familiarity: reasonable understanding of the concepts in the paper, encountered before, or some background knowledge
-                        * Good Familiarity: a solid understanding due to prior exposure or study
-                        * Expert: highly knowledgeable and experienced in the field and has worked extensively with these concepts
-                    ''')
-                    paper_familiarity = survey.select_slider(
-                        label="paper_familiarity",
-                        options=['No Familiarity', 'Limited Familiarity', 'Moderate Familiarity',
-                                 'Good Familiarity', 'Expert Familiarity'],
-                        # min_value=1,
-                        # max_value=5,
-                        label_visibility="collapsed",
-                    )
-                    st.session_state['questionnaire_response']['paper_familiarity'] = paper_familiarity
+                    st.write("#### what is your level of english proficiency?")
+                    english_proficiency = st.slider("English Proficiency (1-5):", min_value=1, max_value=5, value=1)
+                    st.session_state['questionnaire_response']['english_proficiency'] = english_proficiency
+
                 elif survey_pages.current == 6:
+                    st.write("#### What is the primary language spoken in your home? (click from the list and others)")
+                    languages = ['English', 'Spanish', ]
+                    language_options = {}
+                    for i in range(len(languages)):
+                        language_options[languages[i]] = survey.checkbox(languages[i])
+                    language_spoken = []
+                    for language in language_options:
+                        if language_options[language]:
+                            language_spoken.append(language)
+                    other_language = survey.text_input('Other')
+
+                    if other_language:
+                        language_spoken.append(other_language)
+                    st.session_state['questionnaire_response']['language_spoken'] = language_spoken
+
+                elif survey_pages.current == 7:
+                    st.write("#### Do you speak other languages? How fluent are you in each language?")
+                    language_fluency = {}
+                    language_index = 1
+                    col1, col2 = st.columns([3, 2])
+
+                    with col1:
+                        other_language = survey.text_input(f'Language {"#" + str(language_index)}')
+                    with col2:
+                        fluency = survey.selectbox(f'Fluency {"#" + str(language_index)}',
+                                                   options=["", "Beginner", "Intermediate", "Advanced", "Native"],
+                                                   )
+                    if other_language and fluency:
+                        language_fluency.update({other_language: fluency})
+
+                    while other_language:
+                        language_index += 1
+                        with col1:
+                            other_language = survey.text_input(f'Language {"#" + str(language_index)}')
+                        with col2:
+                            fluency = survey.selectbox(f'Fluency {"#" + str(language_index)}',
+                                                       options=["", "Beginner", "Intermediate", "Advanced", "Native"],
+                                                       )
+                        if other_language and fluency:
+                            language_fluency.update({other_language: fluency})
+                    st.session_state['questionnaire_response']['other_language'] = language_fluency
+
+                elif survey_pages.current == 8:
                     st.write(
                         "#### How much do you use technology (computers, cell phones, tablets, GPS, internet, etc.)?")
                     st.markdown('''
@@ -371,7 +441,7 @@ if page == 'Login':
                         label_visibility="collapsed",
                     )
                     st.session_state['questionnaire_response']['tech_usage'] = tech_usage
-                elif survey_pages.current == 7:
+                elif survey_pages.current == 9:
                     st.write("#### How often do you read or watch/listen to the news?")
                     news_read = survey.radio(
                         label="news_read",
@@ -382,35 +452,20 @@ if page == 'Login':
                         horizontal=False,
                     )
                     st.session_state['questionnaire_response']['news_read'] = news_read
-                elif survey_pages.current == 8:
+                elif survey_pages.current == 10:
                     st.write("#### How many books do you read or listen to a month?")
                     books_read = survey.radio(
                         label="books_read",
-                        options=["None", "1-3", "4-6", "7+"],
+                        options=["0", "1-3", "4-6", "7+"],
                         index=0,
                         label_visibility="collapsed",
                         horizontal=True,
                     )
                     st.session_state['questionnaire_response']['books_read'] = books_read
-                elif survey_pages.current == 9:
-                    st.write("#### What is the primary language spoken in your home? (click from the list and others)")
-                    languages = ['English', 'Spanish', ]
-                    language_options = {}
-                    for i in range(len(languages)):
-                        language_options[languages[i]] = survey.checkbox(languages[i])
-                    language_spoken = []
-                    for language in language_options:
-                        if language_options[language]:
-                            language_spoken.append(language)
-                    other_language = survey.text_input('Other')
-
-                    if other_language:
-                        language_spoken.append(other_language)
-                    st.session_state['questionnaire_response']['language_spoken'] = language_spoken
 
     elif authentication_status is False:
         st.error('Username or Password is incorrect', icon="⚠️")
-elif page == 'Sign Up':
+elif init_page == 'Sign Up':
     try:
         if authenticator.register_user('Register user', preauthorization=False):
             st.success('User registered successfully')

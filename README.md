@@ -7,6 +7,13 @@ To run `streamlit_app.py` locally, please make sure that:
 Then `streamlit run streamlit_app.py` to test it locally.<br>
 Online web link: https://huggingface.co/spaces/yuki-816/science-communication
 
+### Update 10/20
+* Updated `generate_response` parameters.
+* Updated `user_context` template in `generate_response` function.
+* Modified survey questions in `Questionnaire` page.
+* Move `paper familiarity` question to the home page.
+* Stored user data as dictionary in Deta.
+
 ### Update 10/06
 * Updated `user_context` template in `generate_response` function.
 * Properly stored user response in questionnaire to Deta database
